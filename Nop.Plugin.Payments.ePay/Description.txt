@@ -1,0 +1,8 @@
+﻿Group: Payment methods
+FriendlyName: Payment ePay/EasyPay
+SystemName: Payments.ePay/EasyPay
+Version: 3.90
+SupportedVersions: 3.90
+Author: Nop-Templates.com
+DisplayOrder: 1
+FileName: Nop.Plugin.Payments.ePay.dll
