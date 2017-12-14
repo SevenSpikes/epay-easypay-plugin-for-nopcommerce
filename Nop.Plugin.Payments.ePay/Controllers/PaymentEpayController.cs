@@ -1,19 +1,20 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Web.Mvc;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Nop.Core;
 using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Payments;
 using Nop.Plugin.Payments.ePay.Models;
-using Nop.Services.Common;
 using Nop.Services.Configuration;
 using Nop.Services.Localization;
 using Nop.Services.Orders;
 using Nop.Services.Payments;
 using Nop.Services.Stores;
+using Nop.Web.Framework;
 using Nop.Web.Framework.Controllers;
+using Nop.Web.Framework.Mvc.Filters;
 
 namespace Nop.Plugin.Payments.ePay.Controllers
 {
@@ -22,36 +23,36 @@ namespace Nop.Plugin.Payments.ePay.Controllers
         private readonly IWorkContext _workContext;
         private readonly IStoreService _storeService;
         private readonly ISettingService _settingService;
+        private readonly ILocalizationService _localizationService;
         private readonly IPaymentService _paymentService;
         private readonly IOrderService _orderService;
         private readonly IOrderProcessingService _orderProcessingService;
-        private readonly ILocalizationService _localizationService;
         private readonly IStoreContext _storeContext;
         private readonly OrderSettings _orderSettings;
-        private readonly IGenericAttributeService _genericAttributeService;
 
         public PaymentEpayController(IWorkContext workContext,
             IStoreService storeService,
             ISettingService settingService,
-            IPaymentService paymentService,
-            IOrderService orderService,
-            IOrderProcessingService orderProcessingService,
-            ILocalizationService localizationService, IStoreContext storeContext, OrderSettings orderSettings, IGenericAttributeService genericAttributeService)
+            ILocalizationService localizationService,
+            IPaymentService paymentService, 
+            IOrderService orderService, 
+            IOrderProcessingService orderProcessingService, 
+            IStoreContext storeContext,
+            OrderSettings orderSettings)
         {
             _workContext = workContext;
             _storeService = storeService;
             _settingService = settingService;
+            _localizationService = localizationService;
             _paymentService = paymentService;
             _orderService = orderService;
             _orderProcessingService = orderProcessingService;
-            _localizationService = localizationService;
             _storeContext = storeContext;
             _orderSettings = orderSettings;
-            _genericAttributeService = genericAttributeService;
         }
 
-        [AdminAuthorize]
-        [ChildActionOnly]
+        [Area(AreaNames.Admin)]
+        [AuthorizeAdmin]
         public ActionResult Configure()
         {
             //load settings for a chosen store scope
@@ -89,8 +90,8 @@ namespace Nop.Plugin.Payments.ePay.Controllers
         }
 
         [HttpPost]
-        [AdminAuthorize]
-        [ChildActionOnly]
+        [Area(AreaNames.Admin)]
+        [AuthorizeAdmin]
         public ActionResult Configure(ConfigurationModel model)
         {
             if (!ModelState.IsValid)
@@ -168,52 +169,6 @@ namespace Nop.Plugin.Payments.ePay.Controllers
             return Configure();
         }
 
-        [ChildActionOnly]
-        public ActionResult PaymentInfo()
-        {
-            var storeScope = GetActiveStoreScopeConfiguration(_storeService, _workContext);
-            var ePayPaymentSettings = _settingService.LoadSetting<EPayPaymentSettings>(storeScope);
-
-            var model = new EpayPaymentMethodModel
-            {
-                EnableEpay = ePayPaymentSettings.EnableEpay,
-                EnableEasyPay = ePayPaymentSettings.EnableEasyPay
-            };
-
-            if (ePayPaymentSettings.EnableEpay)
-            {
-                model.PaymentType = PaymentType.Epay;
-            }
-            else
-            {
-                model.PaymentType = PaymentType.EasyPay;
-            }
-
-            return View("~/Plugins/Payments.ePay/Views/PaymentEpay/PaymentInfo.cshtml", model);
-        }
-
-        [NonAction]
-        public override IList<string> ValidatePaymentForm(FormCollection form)
-        {
-            var paymentMethodType = form["PaymentType"];
-
-            if (!String.IsNullOrEmpty(paymentMethodType))
-            {
-                var type = (PaymentType)Enum.Parse(typeof(PaymentType), paymentMethodType);
-
-                _genericAttributeService.SaveAttribute(_workContext.CurrentCustomer, Constatnts.CurrentPaymentTypeAttributeKey, type);
-            }
-
-            var warnings = new List<string>();
-            return warnings;
-        }
-
-        [NonAction]
-        public override ProcessPaymentRequest GetPaymentInfo(FormCollection form)
-        {
-            var paymentInfo = new ProcessPaymentRequest();
-            return paymentInfo;
-        }
 
         public ActionResult EasyPayInfo(int orderId, string easyPayCode)
         {
@@ -367,7 +322,6 @@ namespace Nop.Plugin.Payments.ePay.Controllers
             return new EmptyResult();
         }
 
-        [ValidateInput(false)]
         public ActionResult PDTHandler(FormCollection form)
         {
             var order = _orderService.SearchOrders(storeId: _storeContext.CurrentStore.Id,

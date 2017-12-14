@@ -1,43 +1,33 @@
-﻿using System.Web.Mvc;
-using System.Web.Routing;
-using Nop.Web.Framework.Mvc.Routes;
+﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Routing;
+using Nop.Web.Framework.Mvc.Routing;
 
 namespace Nop.Plugin.Payments.ePay
 {
     public partial class RouteProvider : IRouteProvider
     {
-        public void RegisterRoutes(RouteCollection routes)
+        public void RegisterRoutes(IRouteBuilder routeBuilder)
         {
             //PDT
-            routes.MapRoute("Plugin.Payments.ePay.PDTHandler",
+            routeBuilder.MapRoute("Plugin.Payments.ePay.PDTHandler",
                  "Plugins/PaymentEpay/PDTHandler",
-                 new { controller = "PaymentEpay", action = "PDTHandler" },
-                 new[] { "Nop.Plugin.Payments.ePay.Controllers" }
-            );
+                 new { controller = "PaymentEpay", action = "PDTHandler" });
 
-            routes.MapRoute("Plugin.Payments.ePay.CancelOrder",
+            routeBuilder.MapRoute("Plugin.Payments.ePay.CancelOrder",
                 "Plugins/PaymentEpay/CancelOrder",
-                new { controller = "PaymentEpay", action = "CancelOrder" },
-                new[] { "Nop.Plugin.Payments.ePay.Controllers" }
-                );
+                new { controller = "PaymentEpay", action = "CancelOrder" });
 
-            routes.MapRoute("Plugin.Payments.ePay.PaymentDone",
+            routeBuilder.MapRoute("Plugin.Payments.ePay.PaymentDone",
                "Plugins/PaymentEpay/PaymentDone",
-               new { controller = "PaymentEpay", action = "PaymentDone" },
-               new[] { "Nop.Plugin.Payments.ePay.Controllers" }
-               );
+               new { controller = "PaymentEpay", action = "PaymentDone" });
 
-            routes.MapRoute("Plugin.Payments.ePay.EasyPayInfo",
+            routeBuilder.MapRoute("Plugin.Payments.ePay.EasyPayInfo",
               "Plugins/PaymentEpay/EasyPayInfo",
-              new { controller = "PaymentEpay", action = "EasyPayInfo" },
-              new[] { "Nop.Plugin.Payments.ePay.Controllers" }
-              );
+              new { controller = "PaymentEpay", action = "EasyPayInfo" });
 
-            routes.MapRoute("Plugin.Payments.ePay.EasyPayError",
+            routeBuilder.MapRoute("Plugin.Payments.ePay.EasyPayError",
              "Plugins/PaymentEpay/EasyPayError",
-             new { controller = "PaymentEpay", action = "EasyPayError" },
-             new[] { "Nop.Plugin.Payments.ePay.Controllers" }
-             );
+             new { controller = "PaymentEpay", action = "EasyPayError" });
         }
         public int Priority
         {

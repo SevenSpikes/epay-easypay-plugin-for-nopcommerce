@@ -1,12 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.IO;
-using System.Net;
-using System.Security.Cryptography;
-using System.Text;
-using System.Web;
-using System.Web.Routing;
 using Nop.Core;
 using Nop.Core.Domain.Directory;
 using Nop.Core.Domain.Orders;
@@ -20,6 +11,15 @@ using Nop.Services.Directory;
 using Nop.Services.Localization;
 using Nop.Services.Orders;
 using Nop.Services.Payments;
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
+using System.Net;
+using System.Security.Cryptography;
+using System.Text;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
 
 namespace Nop.Plugin.Payments.ePay
 {
@@ -37,10 +37,11 @@ namespace Nop.Plugin.Payments.ePay
         private readonly IWebHelper _webHelper;
         private readonly IOrderTotalCalculationService _orderTotalCalculationService;
         private readonly IWorkContext _workContext;
-        private readonly HttpContextBase _httpContext;
         private readonly EPayPaymentSettings _ePayPaymentSettings;
         private readonly IOrderService _orderService;
         private readonly ILocalizationService _localizationService;
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IGenericAttributeService _genericAttributeService;
 
         #endregion
 
@@ -49,8 +50,8 @@ namespace Nop.Plugin.Payments.ePay
         public EPayPaymentProcessor(ISettingService settingService,
             ICurrencyService currencyService, ICustomerService customerService,
             CurrencySettings currencySettings, IWebHelper webHelper,
-            IOrderTotalCalculationService orderTotalCalculationService, IWorkContext workContext, HttpContextBase httpContext, EPayPaymentSettings ePayPaymentSettings,
-            IOrderService orderService, ILocalizationService localizationService)
+            IOrderTotalCalculationService orderTotalCalculationService, IWorkContext workContext, EPayPaymentSettings ePayPaymentSettings,
+            IOrderService orderService, ILocalizationService localizationService, IHttpContextAccessor httpContextAccessor, IGenericAttributeService genericAttributeService)
         {
             _settingService = settingService;
             _currencyService = currencyService;
@@ -59,10 +60,11 @@ namespace Nop.Plugin.Payments.ePay
             _webHelper = webHelper;
             _orderTotalCalculationService = orderTotalCalculationService;
             _workContext = workContext;
-            _httpContext = httpContext;
             _ePayPaymentSettings = ePayPaymentSettings;
             _orderService = orderService;
             _localizationService = localizationService;
+            _httpContextAccessor = httpContextAccessor;
+            _genericAttributeService = genericAttributeService;
         }
 
         #endregion
@@ -190,7 +192,7 @@ namespace Nop.Plugin.Payments.ePay
             var builder = new StringBuilder();
 
             var paymentMethod =
-                _workContext.CurrentCustomer.GetAttribute<PaymentType>(Constatnts.CurrentPaymentTypeAttributeKey);
+                _workContext.CurrentCustomer.GetAttribute<PaymentType>(Constants.CurrentPaymentTypeAttributeKey);
 
             if (paymentMethod == PaymentType.Epay)
             {
@@ -198,13 +200,13 @@ namespace Nop.Plugin.Payments.ePay
                 var cancelReturnUrl = _webHelper.GetStoreLocation(false) + "Plugins/PaymentEpay/CancelOrder";
 
                 builder.Append(GetEpaylUrl());
-                builder.AppendFormat("?PAGE=paylogin&encoded={0}&checksum={1}&url_ok={2}&url_cancel={3}", HttpUtility.UrlEncode(encoded), EncodeHMACSHA1(encoded, _ePayPaymentSettings.SecretKey), returnUrl, cancelReturnUrl);
+                builder.AppendFormat("?PAGE=paylogin&encoded={0}&checksum={1}&url_ok={2}&url_cancel={3}", WebUtility.UrlEncode(encoded), EncodeHMACSHA1(encoded, _ePayPaymentSettings.SecretKey), returnUrl, cancelReturnUrl);
 
-                _httpContext.Response.Redirect(builder.ToString());
+                _httpContextAccessor.HttpContext.Response.Redirect(builder.ToString());
             }
             else if (paymentMethod == PaymentType.EasyPay)
             {
-                builder.AppendFormat("?encoded={0}&checksum={1}", HttpUtility.UrlEncode(encoded), EncodeHMACSHA1(encoded, _ePayPaymentSettings.SecretKey));
+                builder.AppendFormat("?encoded={0}&checksum={1}", WebUtility.UrlEncode(encoded), EncodeHMACSHA1(encoded, _ePayPaymentSettings.SecretKey));
 
                 var req = (HttpWebRequest)WebRequest.Create(GetEasyPayUrl() + builder);
                 req.Method = "GET";
@@ -214,7 +216,7 @@ namespace Nop.Plugin.Payments.ePay
 
                 using (var sr = new StreamReader(req.GetResponse().GetResponseStream()))
                 {
-                    response = HttpUtility.UrlDecode(sr.ReadToEnd());
+                    response = WebUtility.UrlDecode(sr.ReadToEnd());
                 }
 
                 if (!String.IsNullOrEmpty(response))
@@ -241,12 +243,12 @@ namespace Nop.Plugin.Payments.ePay
                                 String.Format("Plugins/PaymentEpay/EasyPayInfo?orderId={0}&easyPayCode={1}",
                                     postProcessPaymentRequest.Order.Id, responseCode);
 
-                            _httpContext.Response.Redirect(_webHelper.GetStoreLocation(false) + easyPayInfoUrl);
+                            _httpContextAccessor.HttpContext.Response.Redirect(_webHelper.GetStoreLocation(false) + easyPayInfoUrl);
                         }
                     }
                     else
                     {
-                        _httpContext.Response.Redirect(_webHelper.GetStoreLocation(false) + "Plugins/PaymentEpay/EasyPayError?orderId=" + postProcessPaymentRequest.Order.Id);
+                        _httpContextAccessor.HttpContext.Response.Redirect(_webHelper.GetStoreLocation(false) + "Plugins/PaymentEpay/EasyPayError?orderId=" + postProcessPaymentRequest.Order.Id);
                     }
                 }
             }
@@ -353,30 +355,43 @@ namespace Nop.Plugin.Payments.ePay
             return false;
         }
 
-        /// <summary>
-        /// Gets a route for provider configuration
-        /// </summary>
-        /// <param name="actionName">Action name</param>
-        /// <param name="controllerName">Controller name</param>
-        /// <param name="routeValues">Route values</param>
-        public void GetConfigurationRoute(out string actionName, out string controllerName, out RouteValueDictionary routeValues)
+        public IList<string> ValidatePaymentForm(IFormCollection form)
         {
-            actionName = "Configure";
-            controllerName = "PaymentEpay";
-            routeValues = new RouteValueDictionary { { "Namespaces", "Nop.Plugin.Payments.ePay.Controllers" }, { "area", null } };
+            var paymentMethodType = form["PaymentType"];
+
+            if (!String.IsNullOrEmpty(paymentMethodType))
+            {
+                var type = (PaymentType)Enum.Parse(typeof(PaymentType), paymentMethodType);
+
+                _genericAttributeService.SaveAttribute(_workContext.CurrentCustomer, Constants.CurrentPaymentTypeAttributeKey, type);
+            }
+
+            var warnings = new List<string>();
+            return warnings;
+        }
+
+
+        public ProcessPaymentRequest GetPaymentInfo(IFormCollection form)
+        {
+            var paymentInfo = new ProcessPaymentRequest();
+            return paymentInfo;
         }
 
         /// <summary>
-        /// Gets a route for payment info
+        /// Gets a configuration page URL
         /// </summary>
-        /// <param name="actionName">Action name</param>
-        /// <param name="controllerName">Controller name</param>
-        /// <param name="routeValues">Route values</param>
-        public void GetPaymentInfoRoute(out string actionName, out string controllerName, out RouteValueDictionary routeValues)
+        public override string GetConfigurationPageUrl()
         {
-            actionName = "PaymentInfo";
-            controllerName = "PaymentEpay";
-            routeValues = new RouteValueDictionary { { "Namespaces", "Nop.Plugin.Payments.ePay.Controllers" }, { "area", null } };
+            return $"{_webHelper.GetStoreLocation()}Admin/PaymentEpay/Configure";
+        }
+
+        /// <summary>
+        /// Gets a view component for displaying plugin in public store ("payment info" checkout step)
+        /// </summary>
+        /// <param name="viewComponentName">View component name</param>
+        public void GetPublicViewComponent(out string viewComponentName)
+        {
+            viewComponentName = "PaymentEpay";
         }
 
         public Type GetControllerType()
