@@ -56,7 +56,7 @@ namespace Nop.Plugin.Payments.ePay.Controllers
         public ActionResult Configure()
         {
             //load settings for a chosen store scope
-            var storeScope = GetActiveStoreScopeConfiguration(_storeService, _workContext);
+            var storeScope = _storeContext.ActiveStoreScopeConfiguration;
             var ePaySettings = _settingService.LoadSetting<EPayPaymentSettings>(storeScope);
 
             var model = new ConfigurationModel
@@ -98,7 +98,7 @@ namespace Nop.Plugin.Payments.ePay.Controllers
                 return Configure();
 
             //load settings for a chosen store scope
-            var storeScope = GetActiveStoreScopeConfiguration(_storeService, _workContext);
+            var storeScope = _storeContext.ActiveStoreScopeConfiguration;
             var ePayPaymentSettings = _settingService.LoadSetting<EPayPaymentSettings>(storeScope);
 
             //save settings
@@ -202,7 +202,7 @@ namespace Nop.Plugin.Payments.ePay.Controllers
         [HttpPost]
         public ActionResult PaymentDone(FormCollection form)
         {
-            var storeScope = GetActiveStoreScopeConfiguration(_storeService, _workContext);
+            var storeScope = _storeContext.ActiveStoreScopeConfiguration;
             var ePayPaymentSettings = _settingService.LoadSetting<EPayPaymentSettings>(storeScope);
             var processor = _paymentService.LoadPaymentMethodBySystemName("Payments.ePay/EasyPay") as EPayPaymentProcessor;
             var encoded = form["encoded"];

@@ -42,16 +42,25 @@ namespace Nop.Plugin.Payments.ePay
         private readonly ILocalizationService _localizationService;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IGenericAttributeService _genericAttributeService;
+        private readonly IPaymentService _paymentService;
 
         #endregion
 
         #region Ctor
 
         public EPayPaymentProcessor(ISettingService settingService,
-            ICurrencyService currencyService, ICustomerService customerService,
-            CurrencySettings currencySettings, IWebHelper webHelper,
-            IOrderTotalCalculationService orderTotalCalculationService, IWorkContext workContext, EPayPaymentSettings ePayPaymentSettings,
-            IOrderService orderService, ILocalizationService localizationService, IHttpContextAccessor httpContextAccessor, IGenericAttributeService genericAttributeService)
+            ICurrencyService currencyService, 
+            ICustomerService customerService,
+            CurrencySettings currencySettings, 
+            IWebHelper webHelper,
+            IOrderTotalCalculationService orderTotalCalculationService, 
+            IWorkContext workContext, 
+            EPayPaymentSettings ePayPaymentSettings,
+            IOrderService orderService, 
+            ILocalizationService localizationService, 
+            IHttpContextAccessor httpContextAccessor, 
+            IGenericAttributeService genericAttributeService,
+            IPaymentService paymentService)
         {
             _settingService = settingService;
             _currencyService = currencyService;
@@ -65,6 +74,7 @@ namespace Nop.Plugin.Payments.ePay
             _localizationService = localizationService;
             _httpContextAccessor = httpContextAccessor;
             _genericAttributeService = genericAttributeService;
+            _paymentService = paymentService;
         }
 
         #endregion
@@ -191,8 +201,9 @@ namespace Nop.Plugin.Payments.ePay
 
             var builder = new StringBuilder();
 
-            var paymentMethod =
-                _workContext.CurrentCustomer.GetAttribute<PaymentType>(Constants.CurrentPaymentTypeAttributeKey);
+            var paymentMethod = _genericAttributeService
+                                        .GetAttribute<PaymentType>(_workContext.CurrentCustomer,Constants.CurrentPaymentTypeAttributeKey);
+                //_workContext.CurrentCustomer.GetAttribute<PaymentType>(Constants.CurrentPaymentTypeAttributeKey);
 
             if (paymentMethod == PaymentType.Epay)
             {
@@ -273,9 +284,8 @@ namespace Nop.Plugin.Payments.ePay
         /// <param name="cart">Shoping cart</param>
         /// <returns>Additional handling fee</returns>
         public decimal GetAdditionalHandlingFee(IList<ShoppingCartItem> cart)
-        {
-            var result = this.CalculateAdditionalFee(_orderTotalCalculationService, cart,
-               _ePayPaymentSettings.AdditionalFee, _ePayPaymentSettings.AdditionalFeePercentage);
+        {            
+            var result = _paymentService.CalculateAdditionalFee(cart,_ePayPaymentSettings.AdditionalFee, _ePayPaymentSettings.AdditionalFeePercentage);
             return result;
         }
 
@@ -412,51 +422,51 @@ namespace Nop.Plugin.Payments.ePay
             _settingService.SaveSetting(settings);
 
             //locales
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.UseSandbox", "Use Sandbox");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.UseSandbox.Hint", "Check to enable Sandbox (testing environment).");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.CustomerNumber", "Dealer ID");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.CustomerNumber.Hint", "Specify the dealer ID.");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.DealerEmail", "Dealer email");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.DealerEmail.Hint", "Specify the dealer email.");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.SecretKey", "Dealer's secret key");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.ExpirationTimeDays", "Payment request expiration time");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.ExpirationTimeDays.Hint", "Set the payment request expiration time in days.");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.SecretKey.Hint", "Specify the dealer's secret key.");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.AdditionalFee", "Additional fee");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.AdditionalFee.Hint", "Enter additional fee to charge your customers.");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.AdditionalFeePercentage", "Additional fee. Use percentage");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.AdditionalFeePercentage.Hint", "Determines whether to apply a percentage additional fee to the order total. If not enabled, a fixed value is used.");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.EnableEasyPay", "Enable EasyPay");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.EnableEasyPay.Hint", "Check to enable the EasyPay payment method.");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.EnableEpay", "Enable ePay");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.EnableEpay.Hint", "Check to enable the ePay payment method.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.UseSandbox", "Use Sandbox");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.UseSandbox.Hint", "Check to enable Sandbox (testing environment).");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.CustomerNumber", "Dealer ID");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.CustomerNumber.Hint", "Specify the dealer ID.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.DealerEmail", "Dealer email");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.DealerEmail.Hint", "Specify the dealer email.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.SecretKey", "Dealer's secret key");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.ExpirationTimeDays", "Payment request expiration time");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.ExpirationTimeDays.Hint", "Set the payment request expiration time in days.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.SecretKey.Hint", "Specify the dealer's secret key.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.AdditionalFee", "Additional fee");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.AdditionalFee.Hint", "Enter additional fee to charge your customers.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.AdditionalFeePercentage", "Additional fee. Use percentage");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.AdditionalFeePercentage.Hint", "Determines whether to apply a percentage additional fee to the order total. If not enabled, a fixed value is used.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.EnableEasyPay", "Enable EasyPay");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.EnableEasyPay.Hint", "Check to enable the EasyPay payment method.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.EnableEpay", "Enable ePay");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.EnableEpay.Hint", "Check to enable the ePay payment method.");
 
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.Message1", "If you're using this gateway ensure that your store supports the BGN currency. (Currency code should be BGN)");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.Message2", "1. Log into your ePay account as a merchant.");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.Message3", "2. Click on Personal Information link.");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.Message4", "3. Fill the bottom form with the data from this page.");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.Message5", "4. Go to the Merchant Information field and click the Edit button.");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.Message6", "5. Click the Edit button at the bottom.");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.Message7", "6. For the notfication URL set http://www.yourStore.com/Plugins/PaymentEpay/PaymentDone");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.Message8", "NOTE: Please, don't forget to replace www.yourStore.com with the url of your store.");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.Message9", "7. Click the Review button.");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.Message10", "8. Click the Accept button.");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.Message11", "Your ePay plugin is now configured. Please don't forget to enable the ePay as a payment provider in your administration.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.Message1", "If you're using this gateway ensure that your store supports the BGN currency. (Currency code should be BGN)");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.Message2", "1. Log into your ePay account as a merchant.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.Message3", "2. Click on Personal Information link.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.Message4", "3. Fill the bottom form with the data from this page.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.Message5", "4. Go to the Merchant Information field and click the Edit button.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.Message6", "5. Click the Edit button at the bottom.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.Message7", "6. For the notfication URL set http://www.yourStore.com/Plugins/PaymentEpay/PaymentDone");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.Message8", "NOTE: Please, don't forget to replace www.yourStore.com with the url of your store.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.Message9", "7. Click the Review button.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.Message10", "8. Click the Accept button.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.Message11", "Your ePay plugin is now configured. Please don't forget to enable the ePay as a payment provider in your administration.");
 
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.EasyPayCode", "EasyPay Code");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.EasyPayCode", "EasyPay Code");
 
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.NoPaymentMethodAvailable", "No payment method is available.");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.NoPaymentMethodAvailable", "No payment method is available.");
 
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.EpayName", "Pay with ePay");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.EasyPayName", "Pay with EasyPay");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.EpayName", "Pay with ePay");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.EasyPayName", "Pay with EasyPay");
 
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.EasyPayError", "There was an error with the easy pay provider. Please check if the ePay settings are configured correctly. And are set for the selected enviroment (Sandbox or production)");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.Title.Error", "Error");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.EasyPayError", "There was an error with the easy pay provider. Please check if the ePay settings are configured correctly. And are set for the selected enviroment (Sandbox or production)");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.Title.Error", "Error");
 
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.OrderDescription", "Payment for order ");
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.PaymentMethodDescription", "Pay by Epay / EasyPay card");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.OrderDescription", "Payment for order ");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.PaymentMethodDescription", "Pay by Epay / EasyPay card");
 
-            this.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.Suffix.Days", "days");
+            _localizationService.AddOrUpdatePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.Suffix.Days", "days");
 
             base.Install();
         }
@@ -467,53 +477,58 @@ namespace Nop.Plugin.Payments.ePay
             _settingService.DeleteSetting<EPayPaymentSettings>();
 
             //locales
-            this.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.UseSandbox");
-            this.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.UseSandbox.Hint");
-            this.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.CustomerNumber");
-            this.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.CustomerNumber.Hint");
-            this.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.DealerEmail");
-            this.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.DealerEmail.Hint");
-            this.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.SecretKey");
-            this.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.SecretKey.Hint");
-            this.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.ExpirationTimeDays");
-            this.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.ExpirationTimeDays.Hint");
-            this.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.AdditionalFee");
-            this.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.AdditionalFee.Hint");
-            this.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.AdditionalFeePercentage");
-            this.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.AdditionalFeePercentage.Hint");
-            this.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.EnableEasyPay");
-            this.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.EnableEasyPay.Hint");
-            this.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.EnableEpay");
-            this.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.EnableEpay.Hint");
-
-            this.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.Message1");
-            this.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.Message2");
-            this.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.Message3");
-            this.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.Message4");
-            this.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.Message5");
-            this.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.Message6");
-            this.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.Message7");
-            this.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.Message8");
-            this.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.Message9");
-            this.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.Message10");
-            this.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.Message11");
-
-            this.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.EasyPayCode");
-
-            this.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.NoPaymentMethodAvailable");
-            this.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.EpayName");
-            this.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.EasyPayName");
-
-            this.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.EasyPayError");
-            this.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.Title.Error");
-
-            this.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.OrderDescription");
-            this.DeletePluginLocaleResource("Plugins.Payments.ePay.PaymentMethodDescription");
-
-            this.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.Suffix.Days");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.UseSandbox");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.UseSandbox.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.CustomerNumber");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.CustomerNumber.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.DealerEmail");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.DealerEmail.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.SecretKey");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.SecretKey.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.ExpirationTimeDays");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.ExpirationTimeDays.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.AdditionalFee");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.AdditionalFee.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.AdditionalFeePercentage");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.AdditionalFeePercentage.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.EnableEasyPay");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.EnableEasyPay.Hint");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.EnableEpay");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.EnableEpay.Hint");
+            
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.Message1");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.Message2");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.Message3");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.Message4");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.Message5");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.Message6");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.Message7");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.Message8");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.Message9");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.Message10");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.Message11");
+            
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.EasyPayCode");
+            
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.NoPaymentMethodAvailable");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.EpayName");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.EasyPayName");
+            
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.EasyPayError");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.Title.Error");
+            
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.OrderDescription");
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.ePay.PaymentMethodDescription");
+            
+            _localizationService.DeletePluginLocaleResource("Plugins.Payments.ePay.Fields.Configure.Suffix.Days");
 
 
             base.Uninstall();
+        }
+
+        public string GetPublicViewComponentName()
+        {
+            throw new NotImplementedException();
         }
 
         #endregion
