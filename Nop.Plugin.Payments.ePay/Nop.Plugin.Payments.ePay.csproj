@@ -1,72 +1,65 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
-  <PropertyGroup>
-    <TargetFramework>net461</TargetFramework>
-    <Copyright>Copyright © Nop-Templates.com</Copyright> 
-    <Company>Nop-Templates.com</Company> 
-    <Authors>Nop-Templates.com</Authors> 
-    <Version>4.00</Version> 
-    <Description>This plugin allows paying with ePay.bg and EasyPay</Description> 
-    <PackageLicenseUrl></PackageLicenseUrl> 
-    <PackageProjectUrl>https://www.nopcommerce.com/p/2249/epaybgeasypay-payment-plugin-for-nopcommerce.aspx</PackageProjectUrl> 
-    <RepositoryUrl>https://github.com/SevenSpikes/epay-easypay-plugin-for-nopcommerce</RepositoryUrl> 
-    <RepositoryType>Git</RepositoryType>
-  </PropertyGroup>
-  
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <OutputPath>..\..\Presentation\Nop.Web\Plugins\Payments.ePay</OutputPath>
-    <OutDir>$(OutputPath)</OutDir>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <OutputPath>..\..\Presentation\Nop.Web\Plugins\Payments.ePay</OutputPath>
-    <OutDir>$(OutputPath)</OutDir>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <None Remove="logo.jpg" />
-    <None Remove="plugin.json" />
-    <None Remove="Views\PaymentEpay\Completed.cshtml" />
-    <None Remove="Views\PaymentEpay\Configure.cshtml" />
-    <None Remove="Views\PaymentEpay\EasyPayError.cshtml" />
-    <None Remove="Views\PaymentEpay\PaymentInfo.cshtml" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="logo.jpg">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="plugin.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Views\PaymentEpay\Completed.cshtml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Views\PaymentEpay\Configure.cshtml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Views\PaymentEpay\EasyPayError.cshtml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Views\PaymentEpay\PaymentInfo.cshtml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Views\PaymentEpay\_ViewImports.cshtml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\..\Libraries\Nop.Core\Nop.Core.csproj" />
-    <ProjectReference Include="..\..\Libraries\Nop.Services\Nop.Services.csproj" />
-    <ProjectReference Include="..\..\Presentation\Nop.Web.Framework\Nop.Web.Framework.csproj" />
-    <ProjectReference Include="..\..\Presentation\Nop.Web\Nop.Web.csproj" />
-  </ItemGroup>
-  
-  <!-- This target execute after "Build" target -->
-  <Target Name="NopTarget" AfterTargets="Build">
-    <!-- Delete unnecessary libraries from plugins path -->
-    <MSBuild Projects="$(MSBuildProjectDirectory)\..\..\Build\ClearPluginAssemblies.proj" Properties="PluginPath=$(MSBuildProjectDirectory)\$(OutDir)" Targets="NopClear" />
-  </Target>
-
+<Project Sdk="Microsoft.NET.Sdk">
+ <PropertyGroup>
+   <TargetFramework>netcoreapp2.1</TargetFramework>
+ </PropertyGroup>  
+ <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+   <OutputPath>..\..\Presentation\Nop.Web\Plugins\Payments.ePay</OutputPath>
+   <OutDir>$(OutputPath)</OutDir>
+ </PropertyGroup>
+ <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+   <OutputPath>..\..\Presentation\Nop.Web\Plugins\Payments.ePay</OutputPath>
+   <OutDir>$(OutputPath)</OutDir>
+ </PropertyGroup>
+ <!-- This target execute after "Build" target -->
+ <Target Name="NopTarget" AfterTargets="Build">
+   <!-- Delete unnecessary libraries from plugins path -->
+   <MSBuild Projects="$(MSBuildProjectDirectory)\..\..\Build\ClearPluginAssemblies.proj" Properties="PluginPath=$(MSBuildProjectDirectory)\$(OutDir)" Targets="NopClear" />
+ </Target>
+ <ItemGroup>
+   <None Remove="easypay.png" />
+   <None Remove="epay.png" />
+   <None Remove="logo.jpg" />
+   <None Remove="plugin.json" />
+   <None Remove="Readme.txt" />
+   <None Remove="Views\PaymentEpay\Completed.cshtml" />
+   <None Remove="Views\PaymentEpay\Configure.cshtml" />
+   <None Remove="Views\PaymentEpay\EasyPayError.cshtml" />
+   <None Remove="Views\PaymentEpay\PaymentInfo.cshtml" />
+   <None Remove="Views\PaymentEpay\_ViewImports.cshtml" />
+ </ItemGroup>
+ <ItemGroup>
+   <Content Include="easypay.png">
+     <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+   </Content>
+   <Content Include="epay.png">
+     <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+   </Content>
+   <Content Include="logo.jpg">
+     <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+   </Content>
+   <Content Include="plugin.json">
+     <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+   </Content>
+   <Content Include="Readme.txt">
+     <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+   </Content>
+   <Content Include="Views\PaymentEpay\Completed.cshtml">
+     <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+   </Content>
+   <Content Include="Views\PaymentEpay\Configure.cshtml">
+     <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+   </Content>
+   <Content Include="Views\PaymentEpay\EasyPayError.cshtml">
+     <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+   </Content>
+   <Content Include="Views\PaymentEpay\PaymentInfo.cshtml">
+     <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+   </Content>
+   <Content Include="Views\PaymentEpay\_ViewImports.cshtml">
+     <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+   </Content>
+ </ItemGroup>
+ <ItemGroup>
+   <ProjectReference Include="..\..\Presentation\Nop.Web.Framework\Nop.Web.Framework.csproj" />
+ </ItemGroup>
 </Project>
