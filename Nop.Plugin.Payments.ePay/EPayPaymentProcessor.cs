@@ -1,8 +1,8 @@
+using Microsoft.AspNetCore.Http;
 using Nop.Core;
 using Nop.Core.Domain.Directory;
 using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Payments;
-using Nop.Core.Plugins;
 using Nop.Plugin.Payments.ePay.Controllers;
 using Nop.Services.Common;
 using Nop.Services.Configuration;
@@ -11,6 +11,7 @@ using Nop.Services.Directory;
 using Nop.Services.Localization;
 using Nop.Services.Orders;
 using Nop.Services.Payments;
+using Nop.Services.Plugins;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -18,8 +19,6 @@ using System.IO;
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Routing;
 
 namespace Nop.Plugin.Payments.ePay
 {

@@ -9,6 +9,7 @@ using Nop.Core.Domain.Payments;
 using Nop.Plugin.Payments.ePay.Models;
 using Nop.Services.Configuration;
 using Nop.Services.Localization;
+using Nop.Services.Messages;
 using Nop.Services.Orders;
 using Nop.Services.Payments;
 using Nop.Services.Stores;
@@ -29,6 +30,8 @@ namespace Nop.Plugin.Payments.ePay.Controllers
         private readonly IOrderProcessingService _orderProcessingService;
         private readonly IStoreContext _storeContext;
         private readonly OrderSettings _orderSettings;
+        private readonly INotificationService _notificationService;
+        private readonly IPaymentPluginManager _paymentPluginManager;
 
         public PaymentEpayController(IWorkContext workContext,
             IStoreService storeService,
@@ -38,7 +41,9 @@ namespace Nop.Plugin.Payments.ePay.Controllers
             IOrderService orderService, 
             IOrderProcessingService orderProcessingService, 
             IStoreContext storeContext,
-            OrderSettings orderSettings)
+            OrderSettings orderSettings,
+            INotificationService notificationService,
+            IPaymentPluginManager paymentPluginManager)
         {
             _workContext = workContext;
             _storeService = storeService;
@@ -49,6 +54,8 @@ namespace Nop.Plugin.Payments.ePay.Controllers
             _orderProcessingService = orderProcessingService;
             _storeContext = storeContext;
             _orderSettings = orderSettings;
+            _notificationService = notificationService;
+            _paymentPluginManager = paymentPluginManager;
         }
 
         [Area(AreaNames.Admin)]
@@ -164,7 +171,7 @@ namespace Nop.Plugin.Payments.ePay.Controllers
             //now clear settings cache
             _settingService.ClearCache();
 
-            SuccessNotification(_localizationService.GetResource("Admin.Plugins.Saved"));
+            _notificationService.SuccessNotification(_localizationService.GetResource("Admin.Plugins.Saved"));
 
             return Configure();
         }
@@ -204,7 +211,7 @@ namespace Nop.Plugin.Payments.ePay.Controllers
         {
             var storeScope = _storeContext.ActiveStoreScopeConfiguration;
             var ePayPaymentSettings = _settingService.LoadSetting<EPayPaymentSettings>(storeScope);
-            var processor = _paymentService.LoadPaymentMethodBySystemName("Payments.ePay/EasyPay") as EPayPaymentProcessor;
+            var processor = _paymentPluginManager.LoadPluginBySystemName("Payments.ePay/EasyPay") as EPayPaymentProcessor;
             var encoded = form["encoded"];
             var checksum = form["checksum"];
 
