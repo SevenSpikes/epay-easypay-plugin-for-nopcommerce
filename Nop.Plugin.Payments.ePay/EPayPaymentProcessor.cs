@@ -394,16 +394,12 @@ namespace Nop.Plugin.Payments.ePay
         {
             return $"{_webHelper.GetStoreLocation()}Admin/PaymentEpay/Configure";
         }
-
-        /// <summary>
-        /// Gets a view component for displaying plugin in public store ("payment info" checkout step)
-        /// </summary>
-        /// <param name="viewComponentName">View component name</param>
-        public void GetPublicViewComponent(out string viewComponentName)
+        
+        public string GetPublicViewComponentName()
         {
-            viewComponentName = "PaymentEpay";
+            return "PaymentEpay";
         }
-
+        
         public Type GetControllerType()
         {
             return typeof(PaymentEpayController);
@@ -525,12 +521,6 @@ namespace Nop.Plugin.Payments.ePay
 
             base.Uninstall();
         }
-
-        public string GetPublicViewComponentName()
-        {
-            throw new NotImplementedException();
-        }
-
         #endregion
 
         #region Properies
